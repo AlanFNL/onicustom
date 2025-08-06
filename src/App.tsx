@@ -285,6 +285,8 @@ function App() {
               {/* Menu Footer */}
               <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-gray-100/50">
                 <div className="flex justify-center space-x-6">
+              
+                  
                   <motion.a
                     href="https://instagram.com/oni.caps"
                     target="_blank"
@@ -391,6 +393,20 @@ function App() {
           transition={{ duration: 0.6, delay: 1, ease: [0.32, 0.72, 0, 1] }}
         >
           <div className="flex justify-center space-x-8">
+            <motion.a
+              href="https://onicaps.online"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center space-x-3 text-gray-600 hover:text-[#7a4dff] transition-colors duration-200"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+              <span className="font-medium">onicaps.online</span>
+            </motion.a>
+            
             <motion.a
               href="https://instagram.com/oni.caps"
               target="_blank"
