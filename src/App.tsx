@@ -339,11 +339,11 @@ function App() {
         </motion.div>
 
         {/* Product Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto items-stretch">
           {productCards.map((product, index) => (
             <motion.div
               key={product.id}
-              className="group cursor-pointer"
+              className="group cursor-pointer h-full"
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ 
@@ -355,15 +355,15 @@ function App() {
               whileTap={{ scale: 0.99 }}
               onClick={() => handleCardClick(product.id)}
             >
-              <div className="bg-white rounded-3xl p-8 shadow-sm hover:shadow-xl transition-all duration-500 ease-out border border-gray-100/50 hover:border-gray-200/50">
-                <div className="aspect-square bg-gray-50/50 rounded-2xl mb-6 overflow-hidden">
+              <div className="bg-white rounded-3xl p-8 shadow-sm hover:shadow-xl transition-all duration-500 ease-out border border-gray-100/50 hover:border-gray-200/50 h-full flex flex-col">
+                <div className="aspect-square bg-gray-50/50 rounded-2xl mb-6 overflow-hidden flex-shrink-0">
                   <img 
                     src={product.image} 
                     alt={product.title}
                     className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-700 ease-out"
                   />
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 flex-grow">
                   <h3 className="text-xl font-medium text-gray-900 tracking-tight">
                     {product.title}
                   </h3>
@@ -372,7 +372,7 @@ function App() {
                   </p>
                 </div>
                 <motion.button 
-                  className="w-full mt-6 bg-[#7a4dff] text-white py-3.5 px-6 rounded-2xl font-normal hover:bg-[#6b42e6] transition-all duration-300 ease-out"
+                  className="w-full mt-6 bg-[#7a4dff] text-white py-3.5 px-6 rounded-2xl font-normal hover:bg-[#6b42e6] transition-all duration-300 ease-out flex-shrink-0"
                   whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.98 }}
                 >
