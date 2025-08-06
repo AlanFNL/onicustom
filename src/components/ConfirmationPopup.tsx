@@ -13,7 +13,6 @@ interface ConfirmationPopupProps {
   isOpen: boolean
   onClose: () => void
   currentProduct: ProductCard | undefined
-  imageFile: File
   canvasDataUrl: string
 }
 
@@ -21,13 +20,11 @@ export default function ConfirmationPopup({
   isOpen, 
   onClose, 
   currentProduct, 
-  imageFile, 
   canvasDataUrl 
 }: ConfirmationPopupProps) {
   const [currentStep, setCurrentStep] = useState(1)
   const [email, setEmail] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isSuccess, setIsSuccess] = useState(false)
   const [loadingState, setLoadingState] = useState<'idle' | 'uploading' | 'saving'>('idle')
   const [generatedCode, setGeneratedCode] = useState('')
   const [isCopied, setIsCopied] = useState(false)
@@ -97,7 +94,6 @@ export default function ConfirmationPopup({
       const result = await edgeFunctionResponse.json()
       
       if (result.success) {
-        setIsSuccess(true)
         setCurrentStep(2)
       } else {
         throw new Error(result.message || 'Failed to save design')
@@ -127,7 +123,6 @@ export default function ConfirmationPopup({
     setCurrentStep(1)
     setEmail('')
     setIsSubmitting(false)
-    setIsSuccess(false)
     setLoadingState('idle')
     setGeneratedCode('')
     setIsCopied(false)

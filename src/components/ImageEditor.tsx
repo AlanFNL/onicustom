@@ -234,7 +234,6 @@ export default function ImageEditor({ productId, productCards, onBack }: ImageEd
         isOpen={isConfirmationOpen}
         onClose={() => setIsConfirmationOpen(false)}
         currentProduct={currentProduct}
-        imageFile={uploadedFile!}
         canvasDataUrl={canvasDataUrl}
       />
     </motion.div>
