@@ -332,8 +332,7 @@ function App() {
             Creá tu diseño
           </h1>
           <p className="text-xl md:text-2xl text-gray-500 max-w-3xl mx-auto font-light leading-relaxed">
-            Diseños únicos para tu setup. Mousepads y keycaps personalizados 
-            <span className="text-gray-400">{""} con la mejor calidad.</span>
+            Diseños únicos para tu setup. Mousepads y keycaps personalizados con la mejor calidad.
           </p>
         </motion.div>
 
