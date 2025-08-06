@@ -74,7 +74,7 @@ export default function ImageEditor({ productId, productCards, onBack }: ImageEd
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <motion.button
             onClick={onBack}
-            className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors duration-200"
+            className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors duration-200 flex-shrink-0"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             initial={{ opacity: 0, x: -20 }}
@@ -84,12 +84,12 @@ export default function ImageEditor({ productId, productCards, onBack }: ImageEd
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-            <span className="font-medium">Volver</span>
+            <span className="font-medium hidden sm:inline">Volver</span>
           </motion.button>
           
           {/* Enhanced Middle Section */}
           <motion.div 
-            className="flex flex-col items-center space-y-3"
+            className="flex flex-col items-center space-y-2 md:space-y-3 flex-1 min-w-0 mx-4"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1, ease: [0.32, 0.72, 0, 1] }}
@@ -103,14 +103,14 @@ export default function ImageEditor({ productId, productCards, onBack }: ImageEd
               <img 
                 src={logo} 
                 alt="Onicaps Logo" 
-                className="h-12 w-auto object-contain"
+                className="h-8 md:h-12 w-auto object-contain"
               />
             </motion.div>
             
             {/* Product Info */}
-            <div className="text-center">
+            <div className="text-center min-w-0">
               <motion.h1 
-                className="text-xl md:text-2xl font-semibold text-gray-900 leading-tight"
+                className="text-lg md:text-xl lg:text-2xl font-semibold text-gray-900 leading-tight truncate"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.4, ease: [0.32, 0.72, 0, 1] }}
@@ -118,7 +118,7 @@ export default function ImageEditor({ productId, productCards, onBack }: ImageEd
                 Editando: {currentProduct?.title}
               </motion.h1>
               <motion.p 
-                className="text-sm text-gray-500 mt-1 font-light"
+                className="text-xs md:text-sm text-gray-500 mt-1 font-light hidden sm:block"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.5, ease: [0.32, 0.72, 0, 1] }}
@@ -131,7 +131,7 @@ export default function ImageEditor({ productId, productCards, onBack }: ImageEd
           {/* Info Button */}
           <motion.button
             onClick={handleShowDisclaimer}
-            className="flex items-center justify-center w-10 h-10 bg-gray-100 text-gray-600 rounded-full hover:bg-gray-200 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+            className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 bg-gray-100 text-gray-600 rounded-full hover:bg-gray-200 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 flex-shrink-0"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             initial={{ opacity: 0, scale: 0.8 }}
@@ -139,7 +139,7 @@ export default function ImageEditor({ productId, productCards, onBack }: ImageEd
             transition={{ duration: 0.6, delay: 0.2, ease: [0.32, 0.72, 0, 1] }}
             aria-label="Mostrar información importante"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </motion.button>
