@@ -31,15 +31,47 @@ const EditorCanvas = forwardRef<EditorCanvasRef, EditorCanvasProps>(({ imageFile
   const imageRef = useRef<any>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
+  // Product dimensions mapping (in pixels for final export/print)
+  const productDimensions = {
+    'mousepad-90x40': { width: 900, height: 400 },
+    'mousepad-60x40': { width: 600, height: 400 },
+    'keycap-kda': { width: 400, height: 400 },
+    'spacebar': { width: 600, height: 200 }
+  }
+  const design = productDimensions[productId as keyof typeof productDimensions] || { width: 600, height: 400 }
+
+  // Responsive display canvas size (visual only). We keep a separate design size for export.
+  const [displayWidth, setDisplayWidth] = useState<number>(() => {
+    if (typeof window === 'undefined') return Math.min(800, design.width)
+    const viewportWidth = window.innerWidth
+    const maxVisual = Math.min(800, Math.floor(viewportWidth * (viewportWidth < 768 ? 0.95 : 0.9)))
+    return Math.min(design.width, maxVisual)
+  })
+  const displayHeight = (displayWidth * design.height) / design.width
+
+  useEffect(() => {
+    const handleResize = () => {
+      const viewportWidth = window.innerWidth
+      const maxVisual = Math.min(800, Math.floor(viewportWidth * (viewportWidth < 768 ? 0.95 : 0.9)))
+      setDisplayWidth(prev => {
+        const next = Math.min(design.width, maxVisual)
+        return next === prev ? prev : next
+      })
+    }
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [design.width])
+
   // Expose canvas export functionality to parent component
   useImperativeHandle(ref, () => ({
     getCanvasDataUrl: () => {
       if (stageRef.current && image) {
-        // Create a new temporary stage for clean export
+        // Create a new temporary stage for clean export at design/original pixel size
         const tempStage = new (window as any).Konva.Stage({
           container: document.createElement('div'),
-          width: canvasWidth,
-          height: canvasHeight
+          width: design.width,
+          height: design.height
         })
         
         // Create a new layer
@@ -50,18 +82,21 @@ const EditorCanvas = forwardRef<EditorCanvasRef, EditorCanvasProps>(({ imageFile
         const background = new (window as any).Konva.Rect({
           x: 0,
           y: 0,
-          width: canvasWidth,
-          height: canvasHeight,
+          width: design.width,
+          height: design.height,
           fill: 'white'
         })
         tempLayer.add(background)
         
-        // Add user image with current position and size
+        // Map display coordinates to design coordinates for precise export
+        const scaleToDesign = design.width / displayWidth
+        
+        // Add user image with current position and size (scaled to design size)
         const tempImage = new (window as any).Konva.Image({
-          x: imageProps.x,
-          y: imageProps.y,
-          width: imageProps.width,
-          height: imageProps.height,
+          x: imageProps.x * scaleToDesign,
+          y: imageProps.y * scaleToDesign,
+          width: imageProps.width * scaleToDesign,
+          height: imageProps.height * scaleToDesign,
           image: image
         })
         tempLayer.add(tempImage)
@@ -73,7 +108,7 @@ const EditorCanvas = forwardRef<EditorCanvasRef, EditorCanvasProps>(({ imageFile
         const dataURL = tempStage.toDataURL({
           mimeType: 'image/png',
           quality: 1,
-          pixelRatio: 2
+          pixelRatio: 1
         })
         
         // Clean up
@@ -149,17 +184,9 @@ const EditorCanvas = forwardRef<EditorCanvasRef, EditorCanvasProps>(({ imageFile
     }
   }, [mobileControlsTimeout])
 
-  // Product dimensions mapping (in pixels for canvas)
-  const productDimensions = {
-    'mousepad-90x40': { width: 900, height: 400 },
-    'mousepad-60x40': { width: 600, height: 400 },
-    'keycap-kda': { width: 400, height: 400 },
-    'spacebar': { width: 600, height: 200 }
-  }
-  
-  const dimensions = productDimensions[productId as keyof typeof productDimensions] || { width: 600, height: 400 }
-  const canvasWidth = Math.min(800, dimensions.width)
-  const canvasHeight = (canvasWidth * dimensions.height) / dimensions.width
+  // Display canvas size (visual)
+  const canvasWidth = displayWidth
+  const canvasHeight = displayHeight
 
   useEffect(() => {
     if (imageFile) {
