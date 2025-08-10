@@ -63,7 +63,7 @@ export default function ImageEditor({ productId, productCards, onBack }: ImageEd
 
   return (
     <motion.div 
-      className="min-h-screen bg-gray-50"
+      className="min-h-screen bg-gray-50 overflow-x-hidden"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -162,14 +162,14 @@ export default function ImageEditor({ productId, productCards, onBack }: ImageEd
             
             {/* Action Buttons */}
             <motion.div 
-              className="flex justify-center space-x-4"
+              className="flex justify-center gap-3 sm:gap-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4, ease: [0.32, 0.72, 0, 1] }}
             >
               <motion.button
                 onClick={() => setUploadedFile(null)}
-                className="px-6 py-3 bg-gray-100 text-gray-700 rounded-2xl font-medium hover:bg-gray-200 transition-colors duration-200"
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors duration-200 text-sm sm:text-base whitespace-nowrap"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -178,7 +178,7 @@ export default function ImageEditor({ productId, productCards, onBack }: ImageEd
               
               <motion.button
                 onClick={handleConfirmImage}
-                className="px-8 py-3 bg-[#7a4dff] text-white rounded-2xl font-medium hover:bg-[#6b42e6] transition-colors duration-200"
+                className="px-5 py-2 bg-[#7a4dff] text-white rounded-xl font-medium hover:bg-[#6b42e6] transition-colors duration-200 text-sm sm:text-base whitespace-nowrap"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >

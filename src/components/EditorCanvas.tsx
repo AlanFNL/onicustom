@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { useState, useRef, useCallback, useEffect, forwardRef, useImperativeHandle } from 'react'
 import { Stage, Layer, Image as KonvaImage, Rect, Text } from 'react-konva'
 
@@ -26,7 +26,7 @@ const EditorCanvas = forwardRef<EditorCanvasRef, EditorCanvasProps>(({ imageFile
   const [showResizeHandles, setShowResizeHandles] = useState(false)
   const [controlsOpacity, setControlsOpacity] = useState(0)
   const [mobileControlsTimeout, setMobileControlsTimeout] = useState<ReturnType<typeof setTimeout> | null>(null)
-  const [showRotationHint, setShowRotationHint] = useState(false)
+  // Removed rotate hint — we now handle mobile via responsive scaling
   const stageRef = useRef<any>(null)
   const imageRef = useRef<any>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -44,17 +44,20 @@ const EditorCanvas = forwardRef<EditorCanvasRef, EditorCanvasProps>(({ imageFile
   const [displayWidth, setDisplayWidth] = useState<number>(() => {
     if (typeof window === 'undefined') return Math.min(800, design.width)
     const viewportWidth = window.innerWidth
-    const maxVisual = Math.min(800, Math.floor(viewportWidth * (viewportWidth < 768 ? 0.95 : 0.9)))
-    return Math.min(design.width, maxVisual)
+    // Account for inner container padding (p-2 => 8px each side) and 1px border on Stage per side
+    const horizontalFrame = 16 + 2
+    const maxVisual = Math.min(800, Math.floor(viewportWidth * (viewportWidth < 768 ? 0.95 : 0.9)) - horizontalFrame)
+    return Math.max(100, Math.min(design.width, maxVisual))
   })
   const displayHeight = (displayWidth * design.height) / design.width
 
   useEffect(() => {
     const handleResize = () => {
       const viewportWidth = window.innerWidth
-      const maxVisual = Math.min(800, Math.floor(viewportWidth * (viewportWidth < 768 ? 0.95 : 0.9)))
+      const horizontalFrame = 16 + 2
+      const maxVisual = Math.min(800, Math.floor(viewportWidth * (viewportWidth < 768 ? 0.95 : 0.9)) - horizontalFrame)
       setDisplayWidth(prev => {
-        const next = Math.min(design.width, maxVisual)
+        const next = Math.max(100, Math.min(design.width, maxVisual))
         return next === prev ? prev : next
       })
     }
@@ -126,32 +129,9 @@ const EditorCanvas = forwardRef<EditorCanvasRef, EditorCanvasProps>(({ imageFile
            (typeof window !== 'undefined' && window.innerWidth < 768)
   }
 
-  const isLargeProduct = () => {
-    return productId === 'mousepad-90x40' || productId === 'mousepad-60x40' || productId === 'spacebar'
-  }
+  // Helper kept for potential future logic on large products
 
-  // Show rotation hint for mobile users editing large products
-  useEffect(() => {
-    if (isMobileDevice() && isLargeProduct() && image) {
-      // Show hint after a brief delay when image loads
-      const timer = setTimeout(() => {
-        setShowRotationHint(true)
-      }, 1000)
-      
-      return () => clearTimeout(timer)
-    }
-  }, [image, productId])
-
-  // Auto-hide rotation hint after 8 seconds
-  useEffect(() => {
-    if (showRotationHint) {
-      const timer = setTimeout(() => {
-        setShowRotationHint(false)
-      }, 8000)
-      
-      return () => clearTimeout(timer)
-    }
-  }, [showRotationHint])
+  // Rotation hint removed
 
   // Handle mobile controls timeout
   const handleMobileTouch = () => {
@@ -302,12 +282,14 @@ const EditorCanvas = forwardRef<EditorCanvasRef, EditorCanvasProps>(({ imageFile
     height: canvasHeight * (1 - safeMargin * 2)
   }
   
-  // Bleed area (red) - at the edges of the canvas
+  // Bleed area (red) - inset by half the stroke so it's fully visible and not clipped
+  const bleedStrokeWidth = 2
+  const bleedInset = bleedStrokeWidth / 2 + 1 // +1px safety to avoid right-edge clipping on mobile
   const bleedArea = {
-    x: 0,
-    y: 0,
-    width: canvasWidth,
-    height: canvasHeight
+    x: bleedInset,
+    y: bleedInset,
+    width: canvasWidth - bleedInset * 2,
+    height: canvasHeight - bleedInset * 2
   }
 
   return (
@@ -317,12 +299,12 @@ const EditorCanvas = forwardRef<EditorCanvasRef, EditorCanvasProps>(({ imageFile
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.6, delay: 0.3, ease: [0.32, 0.72, 0, 1] }}
     >
-      <div className="bg-white rounded-2xl shadow-lg p-2 relative" ref={containerRef}>
+      <div className="bg-white rounded-2xl shadow-lg p-2 relative overflow-hidden" ref={containerRef}>
         <Stage 
           width={canvasWidth} 
           height={canvasHeight} 
           ref={stageRef}
-          className="border border-gray-200 rounded-xl"
+          className="border border-gray-200 rounded-xl touch-none select-none"
           onMouseMove={handleMouseMove}
           onMouseLeave={() => {
             // Don't hide handles on mouse leave - they stay visible when selected
@@ -368,14 +350,14 @@ const EditorCanvas = forwardRef<EditorCanvasRef, EditorCanvasProps>(({ imageFile
 
           {/* Guide Lines Layer - Always on top */}
           <Layer listening={false}>
-            {/* Red bleed line - at canvas edges */}
+            {/* Red bleed line - slightly inset to avoid clipping */}
             <Rect
               x={bleedArea.x}
               y={bleedArea.y}
               width={bleedArea.width}
               height={bleedArea.height}
               stroke="red"
-              strokeWidth={2}
+              strokeWidth={bleedStrokeWidth}
               fill="transparent"
               opacity={0.8}
             />
@@ -542,6 +524,39 @@ const EditorCanvas = forwardRef<EditorCanvasRef, EditorCanvasProps>(({ imageFile
                     document.addEventListener('mousemove', handleMouseMove)
                     document.addEventListener('mouseup', handleMouseUp)
                   }}
+                  onTouchStart={(e) => {
+                    e.preventDefault()
+                    const touch = e.touches[0]
+                    const startX = touch.clientX
+                    const startY = touch.clientY
+                    const startProps = { ...imageProps }
+
+                    const handleTouchMove = (e: TouchEvent) => {
+                      e.preventDefault()
+                      const t = e.touches[0]
+                      const deltaX = t.clientX - startX
+                      const deltaY = t.clientY - startY
+                      const newWidth = Math.max(50, startProps.width - deltaX)
+                      const newHeight = Math.max(50, startProps.height - deltaY)
+                      const actualDeltaX = startProps.width - newWidth
+                      const actualDeltaY = startProps.height - newHeight
+                      setImageProps({
+                        ...startProps,
+                        x: startProps.x + actualDeltaX,
+                        y: startProps.y + actualDeltaY,
+                        width: newWidth,
+                        height: newHeight
+                      })
+                    }
+
+                    const handleTouchEnd = () => {
+                      document.removeEventListener('touchmove', handleTouchMove)
+                      document.removeEventListener('touchend', handleTouchEnd)
+                    }
+
+                    document.addEventListener('touchmove', handleTouchMove, { passive: false })
+                    document.addEventListener('touchend', handleTouchEnd)
+                  }}
                 >
                   <div 
                     className="w-4 h-4 bg-[#7a4dff]/90 border-2 border-white shadow-lg"
@@ -594,6 +609,37 @@ const EditorCanvas = forwardRef<EditorCanvasRef, EditorCanvasProps>(({ imageFile
 
                     document.addEventListener('mousemove', handleMouseMove)
                     document.addEventListener('mouseup', handleMouseUp)
+                  }}
+                  onTouchStart={(e) => {
+                    e.preventDefault()
+                    const touch = e.touches[0]
+                    const startX = touch.clientX
+                    const startY = touch.clientY
+                    const startProps = { ...imageProps }
+
+                    const handleTouchMove = (e: TouchEvent) => {
+                      e.preventDefault()
+                      const t = e.touches[0]
+                      const deltaX = t.clientX - startX
+                      const deltaY = t.clientY - startY
+                      const newWidth = Math.max(50, startProps.width + deltaX)
+                      const newHeight = Math.max(50, startProps.height - deltaY)
+                      const actualDeltaY = startProps.height - newHeight
+                      setImageProps({
+                        ...startProps,
+                        y: startProps.y + actualDeltaY,
+                        width: newWidth,
+                        height: newHeight
+                      })
+                    }
+
+                    const handleTouchEnd = () => {
+                      document.removeEventListener('touchmove', handleTouchMove)
+                      document.removeEventListener('touchend', handleTouchEnd)
+                    }
+
+                    document.addEventListener('touchmove', handleTouchMove, { passive: false })
+                    document.addEventListener('touchend', handleTouchEnd)
                   }}
                 >
                   <div 
@@ -648,6 +694,37 @@ const EditorCanvas = forwardRef<EditorCanvasRef, EditorCanvasProps>(({ imageFile
                     document.addEventListener('mousemove', handleMouseMove)
                     document.addEventListener('mouseup', handleMouseUp)
                   }}
+                  onTouchStart={(e) => {
+                    e.preventDefault()
+                    const touch = e.touches[0]
+                    const startX = touch.clientX
+                    const startY = touch.clientY
+                    const startProps = { ...imageProps }
+
+                    const handleTouchMove = (e: TouchEvent) => {
+                      e.preventDefault()
+                      const t = e.touches[0]
+                      const deltaX = t.clientX - startX
+                      const deltaY = t.clientY - startY
+                      const newWidth = Math.max(50, startProps.width - deltaX)
+                      const newHeight = Math.max(50, startProps.height + deltaY)
+                      const actualDeltaX = startProps.width - newWidth
+                      setImageProps({
+                        ...startProps,
+                        x: startProps.x + actualDeltaX,
+                        width: newWidth,
+                        height: newHeight
+                      })
+                    }
+
+                    const handleTouchEnd = () => {
+                      document.removeEventListener('touchmove', handleTouchMove)
+                      document.removeEventListener('touchend', handleTouchEnd)
+                    }
+
+                    document.addEventListener('touchmove', handleTouchMove, { passive: false })
+                    document.addEventListener('touchend', handleTouchEnd)
+                  }}
                 >
                   <div 
                     className="w-4 h-4 bg-[#7a4dff]/90 border-2 border-white shadow-lg"
@@ -698,6 +775,35 @@ const EditorCanvas = forwardRef<EditorCanvasRef, EditorCanvasProps>(({ imageFile
                     document.addEventListener('mousemove', handleMouseMove)
                     document.addEventListener('mouseup', handleMouseUp)
                   }}
+                  onTouchStart={(e) => {
+                    e.preventDefault()
+                    const touch = e.touches[0]
+                    const startX = touch.clientX
+                    const startY = touch.clientY
+                    const startProps = { ...imageProps }
+
+                    const handleTouchMove = (e: TouchEvent) => {
+                      e.preventDefault()
+                      const t = e.touches[0]
+                      const deltaX = t.clientX - startX
+                      const deltaY = t.clientY - startY
+                      const newWidth = Math.max(50, startProps.width + deltaX)
+                      const newHeight = Math.max(50, startProps.height + deltaY)
+                      setImageProps({
+                        ...startProps,
+                        width: newWidth,
+                        height: newHeight
+                      })
+                    }
+
+                    const handleTouchEnd = () => {
+                      document.removeEventListener('touchmove', handleTouchMove)
+                      document.removeEventListener('touchend', handleTouchEnd)
+                    }
+
+                    document.addEventListener('touchmove', handleTouchMove, { passive: false })
+                    document.addEventListener('touchend', handleTouchEnd)
+                  }}
                 >
                   <div 
                     className="w-4 h-4 bg-[#7a4dff]/90 border-2 border-white shadow-lg"
@@ -712,51 +818,6 @@ const EditorCanvas = forwardRef<EditorCanvasRef, EditorCanvasProps>(({ imageFile
         )}
       </div>
 
-      {/* Rotation Hint for Mobile */}
-      <AnimatePresence>
-        {showRotationHint && (
-          <motion.div
-            className="absolute inset-0 flex items-center justify-center pointer-events-none z-10"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
-          >
-            <motion.div
-              className="bg-black/80 backdrop-blur-sm text-white px-6 py-4 rounded-2xl max-w-sm mx-4 text-center shadow-2xl"
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
-            >
-              <div className="flex items-center justify-center mb-3">
-                <motion.div
-                  className="w-8 h-8 border-2 border-white/60 rounded-lg mr-3"
-                  animate={{ rotate: 90 }}
-                  transition={{ 
-                    duration: 1.5, 
-                    repeat: Infinity, 
-                    repeatType: "reverse",
-                    ease: [0.32, 0.72, 0, 1]
-                  }}
-                />
-                <svg className="w-6 h-6 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-              </div>
-              <p className="text-sm font-medium leading-relaxed">
-                💡 Girá tu teléfono para una mejor experiencia de edición
-              </p>
-              <button
-                className="mt-3 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-xs font-medium transition-colors duration-200 pointer-events-auto"
-                onClick={() => setShowRotationHint(false)}
-              >
-                Entendido
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </motion.div>
   )
 })
