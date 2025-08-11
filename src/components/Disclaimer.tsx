@@ -69,10 +69,7 @@ export default function Disclaimer({ isVisible, onClose }: DisclaimerProps) {
                       Te recomendamos una imagen de resolución 4K o 300 DPI.
                     </p>
                     <p className="text-xs md:text-sm leading-relaxed">
-                      Por favor, rellená hasta la <span className="font-medium text-red-600">línea roja</span>.
-                    </p>
-                    <p className="text-xs md:text-sm leading-relaxed">
-                      Mantené cualquier imagen o texto importante dentro del <span className="font-medium text-green-600">área verde</span>. Cualquier cosa fuera de esta área puede perderse en el proceso de impresión.
+                      Mantené cualquier imagen o texto importante dentro del <span className="font-medium text-red-600">área roja</span>. Cualquier cosa fuera de esta área puede perderse en el proceso de impresión.
                     </p>
                     <p className="text-xs md:text-sm leading-relaxed">
                       Si no rellenás toda el área de carga y solo llegás hasta la línea verde, el producto final tendrá un borde blanco.
