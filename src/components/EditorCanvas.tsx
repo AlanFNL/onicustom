@@ -13,6 +13,7 @@ export interface EditorCanvasRef {
 
 const EditorCanvas = forwardRef<EditorCanvasRef, EditorCanvasProps>(({ imageFile, productId }, ref) => {
   const [image, setImage] = useState<HTMLImageElement | null>(null)
+  const [sourceImageSize, setSourceImageSize] = useState<{ width: number; height: number } | null>(null)
   const [imageProps, setImageProps] = useState({
     x: 0,
     y: 0,
@@ -71,10 +72,27 @@ const EditorCanvas = forwardRef<EditorCanvasRef, EditorCanvasProps>(({ imageFile
     getCanvasDataUrl: () => {
       if (stageRef.current && image) {
         // Create a new temporary stage for clean export at design/original pixel size
+        // Determine export scale to avoid downscaling the original image
+        let exportScale = 1
+        if (sourceImageSize) {
+          const scaleToDesign = design.width / displayWidth
+          const placedImageWidthInDesign = imageProps.width * scaleToDesign
+          const placedImageHeightInDesign = imageProps.height * scaleToDesign
+
+          const scaleByWidth = sourceImageSize.width / Math.max(1, placedImageWidthInDesign)
+          const scaleByHeight = sourceImageSize.height / Math.max(1, placedImageHeightInDesign)
+
+          // Use the limiting dimension to preserve detail without upscaling beyond source
+          exportScale = Math.max(1, Math.min(scaleByWidth, scaleByHeight))
+        }
+
+        const exportWidth = Math.round(design.width * exportScale)
+        const exportHeight = Math.round(design.height * exportScale)
+
         const tempStage = new (window as any).Konva.Stage({
           container: document.createElement('div'),
-          width: design.width,
-          height: design.height
+          width: exportWidth,
+          height: exportHeight
         })
         
         // Create a new layer
@@ -85,8 +103,8 @@ const EditorCanvas = forwardRef<EditorCanvasRef, EditorCanvasProps>(({ imageFile
         const background = new (window as any).Konva.Rect({
           x: 0,
           y: 0,
-          width: design.width,
-          height: design.height,
+          width: exportWidth,
+          height: exportHeight,
           fill: 'white'
         })
         tempLayer.add(background)
@@ -96,10 +114,10 @@ const EditorCanvas = forwardRef<EditorCanvasRef, EditorCanvasProps>(({ imageFile
         
         // Add user image with current position and size (scaled to design size)
         const tempImage = new (window as any).Konva.Image({
-          x: imageProps.x * scaleToDesign,
-          y: imageProps.y * scaleToDesign,
-          width: imageProps.width * scaleToDesign,
-          height: imageProps.height * scaleToDesign,
+          x: imageProps.x * scaleToDesign * exportScale,
+          y: imageProps.y * scaleToDesign * exportScale,
+          width: imageProps.width * scaleToDesign * exportScale,
+          height: imageProps.height * scaleToDesign * exportScale,
           image: image
         })
         tempLayer.add(tempImage)
@@ -173,6 +191,7 @@ const EditorCanvas = forwardRef<EditorCanvasRef, EditorCanvasProps>(({ imageFile
       const img = new window.Image()
       img.onload = () => {
         setImage(img)
+        setSourceImageSize({ width: img.naturalWidth, height: img.naturalHeight })
         
         // Stretch image to fill the entire container (ignore aspect ratio)
         const newWidth = canvasWidth
@@ -235,6 +254,7 @@ const EditorCanvas = forwardRef<EditorCanvasRef, EditorCanvasProps>(({ imageFile
       }
     } else {
       setImage(null)
+      setSourceImageSize(null)
     }
   }, [imageFile, canvasWidth, canvasHeight])
 
@@ -273,23 +293,16 @@ const EditorCanvas = forwardRef<EditorCanvasRef, EditorCanvasProps>(({ imageFile
     // Only used for any future hover effects if needed
   }, [])
   
-  // Safe area (green) - 10% margin from edges
-  const safeMargin = 0.05
-  const safeArea = {
-    x: canvasWidth * safeMargin,
-    y: canvasHeight * safeMargin,
-    width: canvasWidth * (1 - safeMargin * 2),
-    height: canvasHeight * (1 - safeMargin * 2)
-  }
-  
-  // Bleed area (red) - inset by half the stroke so it's fully visible and not clipped
+  // Bleed area (red) - 2% margin from full size of the editable area
   const bleedStrokeWidth = 2
-  const bleedInset = bleedStrokeWidth / 2 + 1 // +1px safety to avoid right-edge clipping on mobile
+  const bleedMarginRatio = 0.02
+  const bleedInsetX = canvasWidth * bleedMarginRatio
+  const bleedInsetY = canvasHeight * bleedMarginRatio
   const bleedArea = {
-    x: bleedInset,
-    y: bleedInset,
-    width: canvasWidth - bleedInset * 2,
-    height: canvasHeight - bleedInset * 2
+    x: bleedInsetX,
+    y: bleedInsetY,
+    width: canvasWidth - bleedInsetX * 2,
+    height: canvasHeight - bleedInsetY * 2
   }
 
   return (
@@ -350,7 +363,7 @@ const EditorCanvas = forwardRef<EditorCanvasRef, EditorCanvasProps>(({ imageFile
 
           {/* Guide Lines Layer - Always on top */}
           <Layer listening={false}>
-            {/* Red bleed line - slightly inset to avoid clipping */}
+            {/* Red bleed line - 2% margin from edges */}
             <Rect
               x={bleedArea.x}
               y={bleedArea.y}
@@ -361,35 +374,13 @@ const EditorCanvas = forwardRef<EditorCanvasRef, EditorCanvasProps>(({ imageFile
               fill="transparent"
               opacity={0.8}
             />
-            
-            {/* Green safe area - 10% margin from edges */}
-            <Rect
-              x={safeArea.x}
-              y={safeArea.y}
-              width={safeArea.width}
-              height={safeArea.height}
-              stroke="green"
-              strokeWidth={2}
-              fill="transparent"
-              opacity={0.6}
-            />
-            
-            {/* Labels */}
+            {/* Label */}
             <Text
               x={bleedArea.x + 10}
               y={bleedArea.y + 10}
               text="Línea de sangrado (rellená hasta aquí)"
               fontSize={12}
               fill="red"
-              fontFamily="Arial, sans-serif"
-            />
-            
-            <Text
-              x={safeArea.x + 10}
-              y={safeArea.y + 10}
-              text="Área segura (mantené contenido importante aquí)"
-              fontSize={12}
-              fill="green"
               fontFamily="Arial, sans-serif"
             />
           </Layer>
