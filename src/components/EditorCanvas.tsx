@@ -374,7 +374,7 @@ const EditorCanvas = forwardRef<EditorCanvasRef, EditorCanvasProps>(({ imageFile
               y={bleedArea.y}
               width={bleedArea.width}
               height={bleedArea.height}
-              stroke="red"
+              stroke="green"
               strokeWidth={bleedStrokeWidth}
               fill="transparent"
               opacity={0.8}
@@ -383,9 +383,9 @@ const EditorCanvas = forwardRef<EditorCanvasRef, EditorCanvasProps>(({ imageFile
             <Text
               x={bleedArea.x + 10}
               y={bleedArea.y + 10}
-              text="Línea de sangrado (rellená hasta aquí)"
+              text="Línea segura (contenido importante hasta aquí)"
               fontSize={12}
-              fill="red"
+              fill="green"
               fontFamily="Arial, sans-serif"
             />
           </Layer>
