@@ -37,7 +37,8 @@ const EditorCanvas = forwardRef<EditorCanvasRef, EditorCanvasProps>(({ imageFile
     'mousepad-90x40': { width: 900, height: 400 },
     'mousepad-60x40': { width: 600, height: 400 },
     'keycap-kda': { width: 400, height: 400 },
-    'spacebar': { width: 600, height: 200 }
+    // Spacebar: 112.5mm x 15mm @ 300 DPI ≈ 1329 x 177 px
+    'spacebar': { width: 1329, height: 177 }
   }
   const design = productDimensions[productId as keyof typeof productDimensions] || { width: 600, height: 400 }
 
@@ -293,16 +294,20 @@ const EditorCanvas = forwardRef<EditorCanvasRef, EditorCanvasProps>(({ imageFile
     // Only used for any future hover effects if needed
   }, [])
   
-  // Bleed area (red) - 2% margin from full size of the editable area
+  // Bleed area (red) - exact 2% of original product design size, scaled to display, compensating stroke
   const bleedStrokeWidth = 2
   const bleedMarginRatio = 0.02
-  const bleedInsetX = canvasWidth * bleedMarginRatio
-  const bleedInsetY = canvasHeight * bleedMarginRatio
+  const scaleX = canvasWidth / design.width
+  const scaleY = canvasHeight / design.height
+  const designInsetX = design.width * bleedMarginRatio
+  const designInsetY = design.height * bleedMarginRatio
+  const bleedInsetX = designInsetX * scaleX
+  const bleedInsetY = designInsetY * scaleY
   const bleedArea = {
-    x: bleedInsetX,
-    y: bleedInsetY,
-    width: canvasWidth - bleedInsetX * 2,
-    height: canvasHeight - bleedInsetY * 2
+    x: bleedInsetX + bleedStrokeWidth / 2,
+    y: bleedInsetY + bleedStrokeWidth / 2,
+    width: canvasWidth - bleedInsetX * 2 - bleedStrokeWidth,
+    height: canvasHeight - bleedInsetY * 2 - bleedStrokeWidth
   }
 
   return (
