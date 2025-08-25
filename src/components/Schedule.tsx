@@ -5,7 +5,7 @@ interface DisclaimerProps {
   onClose: () => void
 }
 
-export default function Disclaimer({ isVisible, onClose }: DisclaimerProps) {
+export default function Schedule({ isVisible, onClose }: DisclaimerProps) {
   return (
     <motion.div
       className="overflow-hidden"

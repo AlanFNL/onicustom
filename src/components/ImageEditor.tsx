@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion'
 import { useEffect, useState, useRef } from 'react'
 import Disclaimer from './Disclaimer'
+import Schedule from './Schedule'
+
 import DragDropArea from './DragDropArea'
 import EditorCanvas, { type EditorCanvasRef } from './EditorCanvas'
 import ConfirmationPopup from './ConfirmationPopup'
@@ -149,7 +151,7 @@ export default function ImageEditor({ productId, productCards, onBack }: ImageEd
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-8 md:px-8">
         <Disclaimer isVisible={isDisclaimerVisible} onClose={handleDisclaimerClose} />
-        
+        <Schedule isVisible={isDisclaimerVisible} onClose={handleDisclaimerClose} />
         {!uploadedFile ? (
           <DragDropArea onFileUpload={handleFileUpload} />
         ) : (
